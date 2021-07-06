@@ -55,112 +55,10 @@ if [ -n "$force_color_prompt" ]; then
 	color_prompt=
     fi
 fi
-# Config Powerline 
-# Add this to your PATH if it’s not already declared
-export PATH=$PATH:$HOME/.local/bin
- 
-# Powerline configuration
-#if [ -f $HOME/.local/lib/python3.8/site-packages/powerline/bindings/bash/powerline.sh ]; then
-#    $HOME/.local/bin/powerline-daemon -q
-#    POWERLINE_BASH_CONTINUATION=1
-#    POWERLINE_BASH_SELECT=1
-#    source $HOME/.local/lib/python3.8/site-packages/powerline/bindings/bash/powerline.sh
-#fi
-
-
-# Git
-prompt_git() {
-	local s='';
-	local branchName='';
-
-	# Check if the current directory is in a Git repository.
-	if [ $(git rev-parse --is-inside-work-tree &>/dev/null; echo "${?}") == '0' ]; then
-
-		# check if the current directory is in .git before running git checks
-		if [ "$(git rev-parse --is-inside-git-dir 2> /dev/null)" == 'false' ]; then
-
-			# Ensure the index is up to date.
-			git update-index --really-refresh -q &>/dev/null;
-
-			# Check for uncommitted changes in the index.
-			if ! $(git diff --quiet --ignore-submodules --cached); then
-				s+='✚';
-			fi;
-
-			# Check for unstaged changes.
-			if ! $(git diff-files --quiet --ignore-submodules --); then
-				s+='✘';
-			fi;
-
-			# Check for untracked files.
-			if [ -n "$(git ls-files --others --exclude-standard)" ]; then
-				s+=' ⚙';
-			fi;
-
-			# Check for stashed files.
-			if $(git rev-parse --verify refs/stash &>/dev/null); then
-				s+=' ';
-			fi;
-
-		fi;
-
-		# Get the short symbolic ref.
-		# If HEAD isn’t a symbolic ref, get the short SHA for the latest commit
-		# Otherwise, just give up.
-		branchName="$(git symbolic-ref --quiet --short HEAD 2> /dev/null || \
-			git rev-parse --short HEAD 2> /dev/null || \
-			echo '(unknown)')";
-
-		[ -n "${s}" ] && s=" [${s}]";
-
-		echo -e "${1}${branchName}${2}${s}";
-	else
-		return;
-	fi;
-}
-# Color
-tput sgr0; # reset colors
-bold=$(tput bold);
-reset=$(tput sgr0);
-# Solarized colors, taken from http://git.io/solarized-colors.
-black=$(tput setaf 0);
-blue=$(tput setaf 153);
-green=$(tput setaf 71);
-orange=$(tput setaf 166);
-red=$(tput setaf 167);
-white=$(tput setaf 15);
-yellow=$(tput setaf 228);
-magenta=$(tput setf 7);
-git_time_since_commit() {
-   local last_commit now seconds_since_last_commit
-   local minutes hours days years commit_age
-   # Only proceed if there is actually a commit.
-   if last_commit=$(git log --pretty=format:'%at' -1 2> /dev/null); then
-     now=$(date +%s)
-     seconds_since_last_commit=$((now-last_commit))
- 
-     # Totals
-     minutes=$((seconds_since_last_commit / 60))
-     hours=$((minutes / 60))
-     days=$((hours / 24))
-     years=$((days / 365))
- 
-     if [[ $years -gt 0 ]]; then
-       commit_age="${years}y$((days % 365 ))d"
-     elif [[ $days -gt 0 ]]; then
-       commit_age="${days}d$((hours % 24))h"
-     elif [[ $hours -gt 0 ]]; then
-       commit_age+="${hours}h$(( minutes % 60 ))m"
-     else
-       commit_age="${minutes}m"
-     fi
-     echo "▶ ${commit_age}"
-   fi
- }
-
 
 if [ "$color_prompt" = yes ]; then
-  PS1='${debian_chroot:+($debian_chroot)}\[${bold}$green\]\u🔥\[\033[0;35m\]in$bold$white \W \[\033[0;35m\]on $(prompt_git $bold$green$blue) $orange$(git_time_since_commit) $reset $white\n➜ '
+    #PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\W\[\033[00m\]\$ '
+    PS1='🔥${debian_chroot:+($debian_chroot)}\[\033[1;32;82m\] \W\[\033[0m\]\[\033[01;35m\]$(__git_ps1 " (%s)")\[\033[00m\] \$ '
 else
     PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 fi
@@ -169,7 +67,7 @@ unset color_prompt force_color_prompt
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
 xterm*|rxvt*)
-    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)} \w\a\]$PS1"
     ;;
 *)
     ;;
@@ -218,13 +116,63 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+alias ..='cd ..'
+alias ...='cd ../../'
+alias ....='cd ../../../'
+alias mw='mysql-workbench'
+alias pa='php artisan'
+alias gp='git push origin master'
 
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+ 
+compile() {
+	if [ $# -eq 0 ]
+	then
+		echo 'Nhập thêm class Chính !'
+	else 
+			touch ../build/test.class
+		 rm ../build/*.class && javac -d ../build/ *.java && cd ../build/ && java $1
+		 cd ../src
+	fi
+}
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+php56() {
+    sudo update-alternatives --set php /usr/bin/php5.6
+    sudo update-alternatives --set php-config /usr/bin/php-config5.6
+    sudo update-alternatives --set phpize /usr/bin/phpize5.6
+}
 
-export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+php70() {
+    sudo update-alternatives --set php /usr/bin/php7.0
+    sudo update-alternatives --set php-config /usr/bin/php-config7.0
+    sudo update-alternatives --set phpize /usr/bin/phpize7.0
+}
 
-export PATH="$PATH:/opt/mssql-tools/bin"
+php71() {
+    sudo update-alternatives --set php /usr/bin/php7.1
+    sudo update-alternatives --set php-config /usr/bin/php-config7.1
+    sudo update-alternatives --set phpize /usr/bin/phpize7.1
+}
+
+php72() {
+    sudo update-alternatives --set php /usr/bin/php7.2
+    sudo update-alternatives --set php-config /usr/bin/php-config7.2
+    sudo update-alternatives --set phpize /usr/bin/phpize7.2
+}
+
+php73() {
+    sudo update-alternatives --set php /usr/bin/php7.3
+    sudo update-alternatives --set php-config /usr/bin/php-config7.3
+    sudo update-alternatives --set phpize /usr/bin/phpize7.3
+}
+
+php74() {
+    sudo update-alternatives --set php /usr/bin/php7.4
+    sudo update-alternatives --set php-config /usr/bin/php-config7.4
+    sudo update-alternatives --set phpize /usr/bin/phpize7.4
+}
+
+php80() {
+    sudo update-alternatives --set php /usr/bin/php8.0
+    sudo update-alternatives --set php-config /usr/bin/php-config8.0
+    sudo update-alternatives --set phpize /usr/bin/phpize8.0
+} 
